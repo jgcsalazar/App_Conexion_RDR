@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conexión · gestión de contactos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #fff; --line: #e8eaee; --line-soft: #f0f1f4;
+    --ink: #111827; --muted: #8a94a6; --dark: #101828;
+    --amber: #d99a2b; --green: #16a34a; --blue: #3b82f6; --red: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, sans-serif; font-size: 14px; }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+  nav { background: var(--card); border-bottom: 1px solid var(--line); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+  .marca { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 38px; height: 38px; border-radius: 10px; background: var(--dark);
+    display: grid; place-items: center; color: #fff; }
+  .marca strong { display: block; font-size: 15px; font-weight: 600; line-height: 1.2; }
+  .marca span { font-size: 11px; color: var(--muted); }
+  .tabs { display: flex; gap: 6px; }
+  .tab { display: flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 8px;
+    border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 500; cursor: pointer; }
+  .tab:hover { color: var(--ink); }
+  .tab.activo { background: var(--dark); color: #fff; }
+
+  header.pag { display: flex; align-items: flex-start; justify-content: space-between; padding: 34px 0 26px; }
+  h1 { font-size: 30px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.02em; }
+  header.pag p { margin: 0; color: var(--muted); }
+
+  .btn { font: inherit; font-weight: 500; font-size: 14px; border-radius: 8px; padding: 10px 16px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  .btn:hover { border-color: #cfd4dc; }
+  .btn.oscuro { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .btn.oscuro:hover { background: #1d2939; }
+  .btn.chico { padding: 6px 12px; font-size: 13px; }
+  .btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+  .metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+  .metrica { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 24px; }
+  .metrica .rot { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .metrica .val { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-top: 26px; }
+  .panel > .cab { display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; border-bottom: 1px solid var(--line-soft); }
+  .panel > .cab strong { font-size: 15px; font-weight: 600; }
+  .panel > .cab .cuenta { font-size: 13px; color: var(--muted); }
+  .panel > .pie { border-top: 1px solid var(--line-soft); text-align: center; padding: 14px; }
+  .panel > .pie button { border: 0; background: none; font: inherit; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .panel > .pie button:hover { color: var(--ink); }
+  .vacio { text-align: center; color: var(--muted); padding: 40px 24px; }
+
+  .fila { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--line-soft); }
+  .fila:last-child { border-bottom: 0; }
+  .fila .quien { flex: 1; min-width: 160px; }
+  .fila .quien b { font-weight: 600; }
+  .fila .quien div { font-size: 13px; color: var(--muted); }
+  .fila a { color: var(--blue); text-decoration: none; }
+  .fila a:hover { text-decoration: underline; }
+  .badge { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .b-pendiente { background: #fdf3e2; color: var(--amber); }
+  .b-sin_respuesta { background: #f1f2f5; color: var(--muted); }
+  .b-interesado { background: #e8f1fe; color: var(--blue); }
+  .b-sumado { background: #e6f6ec; color: var(--green); }
+  .b-no_interesado { background: #fdeceb; color: var(--red); }
+  select, input { font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--card); color: var(--ink); }
+  select.grupo { min-width: 190px; }
+
+  .form { padding: 22px 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+  .grid input, .grid select { width: 100%; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 16px; color: var(--muted); font-size: 13px; }
+  .check input { width: auto; }
+  .acciones { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+  .aviso { font-size: 13px; color: var(--muted); }
+  .aviso.error { color: var(--red); }
+  .oculto { display: none; }
+
+  /* Directorio de contactos: tarjetas */
+  .barra { display: flex; gap: 12px; margin-bottom: 20px; }
+  .buscador { position: relative; flex: 1; }
+  .buscador svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .buscador input { width: 100%; padding-left: 36px; }
+  select.filtro { min-width: 170px; }
+  .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; }
+  .tarjeta { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .tarjeta-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .tarjeta-cab b { font-size: 15px; font-weight: 600; }
+  .tarjeta-acciones { display: flex; gap: 4px; flex: none; }
+  .icono-btn { border: 0; background: none; padding: 5px; border-radius: 6px; color: var(--muted); cursor: pointer; display: flex; }
+  .icono-btn:hover { background: var(--line-soft); color: var(--ink); }
+  select.estado-select { appearance: none; -webkit-appearance: none; border: 0; border-radius: 20px;
+    padding: 4px 10px; font-size: 12px; font-weight: 500; cursor: pointer; margin: 8px 0 14px; }
+  .tarjeta-datos { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--muted); }
+  .tarjeta-datos > div { display: flex; align-items: center; gap: 8px; }
+  .tarjeta-datos svg { flex: none; color: #b0b6c0; }
+  .tarjeta-datos a { color: var(--ink); text-decoration: none; }
+  .tarjeta-datos a:hover { text-decoration: underline; }
+  .tarjeta-grupo { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 12px;
+    background: #eaf1ff; color: var(--blue); border-radius: 8px; font-size: 13px; font-weight: 500; }
+
+  /* Modal de alta/edición */
+  .modal-fondo { position: fixed; inset: 0; background: rgba(16,20,28,.5); display: flex;
+    align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .modal-fondo.oculto { display: none; } /* gana por tener dos clases: más específica que .oculto sola */
+  .modal { background: var(--card); border-radius: 12px; max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal-cab { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px;
+    border-bottom: 1px solid var(--line-soft); position: sticky; top: 0; background: var(--card); }
+  .modal-cab strong { font-size: 16px; font-weight: 600; }
+  @media (max-width: 760px) { .fila { flex-wrap: wrap; } header.pag { flex-direction: column; gap: 16px; }
+    .barra { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div id="modal-fondo" class="modal-fondo oculto">
+  <div class="modal">
+    <div class="modal-cab">
+      <strong id="modal-titulo">Nuevo contacto</strong>
+      <button class="icono-btn" id="modal-cerrar" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form class="form" id="form-modal">
+      <div class="grid">
+        <div><label for="m-nombre">Nombre y apellido</label><input id="m-nombre" required></div>
+        <div><label for="m-telefono">Teléfono</label><input id="m-telefono" placeholder="+54 9 11 5555 1234" required></div>
+        <div><label for="m-email">Email</label><input id="m-email" type="email"></div>
+        <div><label for="m-zona">Zona</label><input id="m-zona"></div>
+        <div><label for="m-estado">Estado</label>
+          <select id="m-estado">
+            <option value="pendiente">Pendiente</option>
+            <option value="interesado">En seguimiento</option>
+            <option value="sumado">Contactado</option>
+            <option value="sin_respuesta">No contesta</option>
+            <option value="no_interesado">No interesado</option>
+          </select></div>
+        <div><label for="m-origen">Cómo lo conocimos</label>
+          <select id="m-origen">
+            <option value="evento">Evento</option><option value="referido">Referido</option>
+            <option value="redes">Redes sociales</option><option value="web">Formulario web</option>
+            <option value="otro" selected>Otro</option>
+          </select></div>
+        <div><label for="m-horario">Mejor horario para llamar</label>
+          <select id="m-horario">
+            <option value="manana">Mañana</option><option value="tarde">Tarde</option>
+            <option value="noche">Noche</option><option value="sin_preferencia" selected>Sin preferencia</option>
+          </select></div>
+        <div><label for="m-grupo">Grupo</label><select id="m-grupo"><option value="">Sin grupo</option></select></div>
+        <div style="grid-column: 1 / -1"><label for="m-notas">Notas</label><input id="m-notas"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="m-autoriza"> Autorizó ser contactado por teléfono</label>
+      <div class="acciones">
+        <button type="submit" class="btn oscuro">Guardar</button>
+        <button type="button" class="btn" id="modal-cancelar">Cancelar</button>
+        <span class="aviso" id="modal-aviso"></span>
+      </div>
+    </form>
+  </div>
+</div>
+<nav>
+  <div class="wrap">
+    <div class="marca">
+      <div class="logo" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg>
+      </div>
+      <div><strong>Conexión</strong><span>Gestión de contactos</span></div>
+    </div>
+    <div class="tabs">
+      <button class="tab activo" data-vista="panel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Panel
+      </button>
+      <button class="tab" data-vista="contactos">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></svg>
+        Contactos
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <!-- Panel -->
+  <div id="v-panel">
+    <header class="pag">
+      <div><h1>Panel</h1><p>Resumen de tu gestión de conexión</p></div>
+      <button class="btn oscuro" data-ir="contactos">Ver contactos</button>
+    </header>
+
+    <div class="metricas" id="metricas"></div>
+
+    <div class="panel">
+      <div class="cab"><strong>Por llamar</strong><span class="cuenta" id="cuenta-cola"></span></div>
+      <div id="cola"></div>
+      <div class="pie"><button data-ir="contactos">Ver todos →</button></div>
+    </div>
+  </div>
+
+  <!-- Contactos -->
+  <div id="v-contactos" class="oculto">
+    <header class="pag">
+      <div><h1>Contactos</h1><p id="subtitulo-contactos">Tu directorio de contactos</p></div>
+      <button class="btn oscuro" id="btn-nuevo">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px; margin-right:4px"><path d="M12 5v14M5 12h14"/></svg>
+        Nuevo
+      </button>
+    </header>
+
+    <div class="barra">
+      <div class="buscador">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="buscar" placeholder="Buscar por nombre, teléfono o ciudad...">
+      </div>
+      <select class="filtro" id="filtro-estado">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="interesado">En seguimiento</option>
+        <option value="sumado">Contactado</option>
+        <option value="sin_respuesta">No contesta</option>
+        <option value="no_interesado">No interesado</option>
+      </select>
+    </div>
+
+    <div class="tarjetas" id="tarjetas"></div>
+
+    <div class="panel" style="margin-top:26px">
+      <div class="cab"><strong>Grupos de conexión</strong><span class="cuenta">Elegilos desde la ficha de cada contacto</span></div>
+      <div id="grupos"></div>
+      <form class="form" id="form-grupo">
+        <div class="grid">
+          <div><label for="g-nombre">Nombre del grupo</label><input id="g-nombre" placeholder="Grupo Norte" required></div>
+          <div><label for="g-dia">Día</label><input id="g-dia" placeholder="martes"></div>
+          <div><label for="g-hora">Horario</label><input id="g-hora" placeholder="20:00"></div>
+          <div><label for="g-cupo">Cupo</label><input id="g-cupo" type="number" min="1" max="100" value="12"></div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn">Crear grupo</button>
+          <button type="button" class="btn" id="csv">Exportar CSV</button>
+          <span class="aviso" id="aviso-grupo"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>
+const api = (ruta, opciones) => fetch('/api' + ruta, opciones).then(async r => {
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || 'Falló la operación');
+  return r.status === 204 ? null : r.json();
+});
+const esc = t => String(t ?? '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+
+// El backend guarda estas 5 claves técnicas; acá solo cambian las etiquetas
+// y colores que ve el usuario, así no hace falta tocar la base de datos.
+const ETIQUETA = { pendiente: 'Pendiente', interesado: 'En seguimiento', sumado: 'Contactado',
+  sin_respuesta: 'No contesta', no_interesado: 'No interesado' };
+const COLOR = { pendiente: '#fdf3e2', interesado: '#e8f1fe', sumado: '#e6f6ec',
+  sin_respuesta: '#f1f2f5', no_interesado: '#fdeceb' };
+const TEXTO_COLOR = { pendiente: 'var(--amber)', interesado: 'var(--blue)', sumado: 'var(--green)',
+  sin_respuesta: 'var(--muted)', no_interesado: 'var(--red)' };
+const HORARIO = { manana: 'mañana', tarde: 'tarde', noche: 'noche', sin_preferencia: 'sin preferencia' };
+let GRUPOS = [];
+let EDITANDO = null; // null = alta nueva; si no, id del contacto que se está editando
+
+const ICONO = {
+  total: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
+  pendientes: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.4 2 .9 2.9.9 2.9L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2s.9.5 2.9.9a2 2 0 0 1 1.7 2Z"/></svg>',
+  contactados: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/></svg>',
+  grupo: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>',
+  tel: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg>',
+  mail: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>',
+  pin: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+  refresh: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15.4-6.4L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.4 6.4L3 16m0 5v-5h5"/></svg>',
+  lapiz: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+  tacho: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>'
+};
+
+function selectGrupo(c) {
+  const opciones = GRUPOS.map(g => {
+    const lleno = g.cupo_disponible === 0 && g.id !== c.grupo_id;
+    return `<option value="${g.id}" ${g.id === c.grupo_id ? 'selected' : ''} ${lleno ? 'disabled' : ''}>
+      ${esc(g.nombre)}${lleno ? ' (sin cupo)' : ` · ${g.cupo_disponible} lugares`}</option>`;
+  }).join('');
+  return `<select class="grupo" data-asignar="${c.id}">
+    <option value="" ${c.grupo_id ? '' : 'selected'}>Sin grupo</option>${opciones}</select>`;
+}
+
+function tarjeta(c) {
+  const grupo = c.grupo_id ? GRUPOS.find(g => g.id === c.grupo_id) : null;
+  return `<div class="tarjeta">
+    <div class="tarjeta-cab">
+      <b>${esc(c.nombre)}</b>
+      <div class="tarjeta-acciones">
+        <button class="icono-btn" data-editar="${c.id}" aria-label="Editar" title="Editar">${ICONO.lapiz}</button>
+        <button class="icono-btn" data-eliminar="${c.id}" aria-label="Eliminar" title="Eliminar">${ICONO.tacho}</button>
+      </div>
+    </div>
+    <select class="estado-select" data-estado="${c.id}" data-cambiar-estado
+      style="background:${COLOR[c.estado]}; color:${TEXTO_COLOR[c.estado]}">
+      ${Object.entries(ETIQUETA).map(([k, v]) =>
+        `<option value="${k}" ${k === c.estado ? 'selected' : ''}>${v}</option>`).join('')}
+    </select>
+    <div class="tarjeta-datos">
+      <div>${ICONO.tel} <a href="tel:${esc(c.telefono.replace(/\s/g, ''))}">${esc(c.telefono)}</a></div>
+      ${c.email ? `<div>${ICONO.mail} ${esc(c.email)}</div>` : ''}
+      ${c.zona ? `<div>${ICONO.pin} ${esc(c.zona)}</div>` : ''}
+      <div>${ICONO.refresh} ${c.llamadas.length} intento(s)</div>
+    </div>
+    ${grupo ? `<div class="tarjeta-grupo">${ICONO.grupo} ${esc(grupo.nombre)}</div>` : ''}
+  </div>`;
+}
+
+function fila(c, opciones) {
+  const intentos = c.llamadas.length;
+  return `<div class="fila">
+    <div class="quien">
+      <b>${esc(c.nombre)}</b>
+      <div>
+        <a href="tel:${esc(c.telefono.replace(/\s/g, ''))}">${esc(c.telefono)}</a>
+        · llamar ${HORARIO[c.horario_preferido]}${intentos ? ` · ${intentos} ${intentos === 1 ? 'intento' : 'intentos'}` : ''}
+      </div>
+    </div>
+    <span class="badge b-${c.estado}">${ETIQUETA[c.estado]}</span>
+    ${opciones.grupo ? selectGrupo(c) : ''}
+    ${opciones.llamada ? `
+      <button class="btn chico" data-llamada="${c.id}" data-resultado="interesado">Interesado</button>
+      <button class="btn chico" data-llamada="${c.id}" data-resultado="sin_respuesta">No atendió</button>
+      <button class="btn chico" data-llamada="${c.id}" data-resultado="no_interesado">No le interesa</button>` : ''}
+  </div>`;
+}
+
+async function refrescar() {
+  const params = new URLSearchParams();
+  const buscar = $('buscar').value.trim();
+  const estado = $('filtro-estado').value;
+  if (buscar) params.set('buscar', buscar);
+  if (estado) params.set('estado', estado);
+
+  const [m, cola, contactos, grupos] = await Promise.all([
+    api('/metricas'), api('/contactos/cola?solo_autorizados=false'),
+    api('/contactos' + (params.toString() ? '?' + params : '')), api('/grupos')
+  ]);
+  GRUPOS = grupos;
+
+  $('metricas').innerHTML = [
+    ['Total', m.total, 'var(--ink)', ICONO.total],
+    ['Pendientes', m.pendientes, 'var(--amber)', ICONO.pendientes],
+    ['Contactados', m.contactados, 'var(--green)', ICONO.contactados],
+    ['En grupo', m.en_grupo, 'var(--blue)', ICONO.grupo]
+  ].map(([rot, val, color, icono]) => `<div class="metrica">
+      <div class="rot">${icono}${rot}</div>
+      <div class="val" style="color:${color}">${val}</div>
+    </div>`).join('');
+
+  $('cuenta-cola').textContent = `${cola.length} ${cola.length === 1 ? 'pendiente' : 'pendientes'}`;
+  $('cola').innerHTML = cola.length
+    ? cola.map(c => fila(c, { grupo: true, llamada: true })).join('')
+    : '<p class="vacio">No hay contactos pendientes por llamar.</p>';
+
+  $('subtitulo-contactos').textContent =
+    `${contactos.length} ${contactos.length === 1 ? 'persona' : 'personas'} en tu directorio`;
+  $('tarjetas').innerHTML = contactos.length
+    ? contactos.map(tarjeta).join('')
+    : `<p class="vacio">${buscar || estado ? 'Ningún contacto coincide con la búsqueda.' : 'Todavía no hay contactos. Creá el primero con “+ Nuevo”.'}</p>`;
+
+  $('grupos').innerHTML = grupos.length
+    ? grupos.map(g => `<div class="fila">
+        <div class="quien"><b>${esc(g.nombre)}</b>
+          <div>${esc(g.dia_semana || 'sin día')} ${esc(g.horario || '')} · ${g.cupo_disponible} de ${g.cupo_maximo} lugares libres</div>
+        </div></div>`).join('')
+    : '<p class="vacio">Creá un grupo para poder asignarle contactos.</p>';
+
+  $('m-grupo').innerHTML = '<option value="">Sin grupo</option>' +
+    grupos.map(g => `<option value="${g.id}">${esc(g.nombre)}</option>`).join('');
+
+  document.querySelectorAll('[data-llamada]').forEach(b =>
+    b.onclick = () => registrar(b.dataset.llamada, b.dataset.resultado));
+  document.querySelectorAll('[data-asignar]').forEach(s =>
+    s.onchange = () => asignar(s.dataset.asignar, s.value));
+  document.querySelectorAll('[data-cambiar-estado]').forEach(s =>
+    s.onchange = () => cambiarEstado(s.dataset.estado, s.value, s));
+  document.querySelectorAll('[data-editar]').forEach(b =>
+    b.onclick = () => abrirModal(contactos.find(c => c.id === Number(b.dataset.editar))));
+  document.querySelectorAll('[data-eliminar]').forEach(b =>
+    b.onclick = () => eliminarContacto(b.dataset.eliminar));
+}
+
+async function registrar(id, resultado) {
+  try {
+    await api(`/contactos/${id}/llamadas`, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resultado }) });
+    await refrescar();
+  } catch (e) { avisar('aviso-grupo', e.message, true); }
+}
+
+async function asignar(id, grupoId) {
+  try {
+    if (grupoId) {
+      await api(`/contactos/${id}/grupo`, { method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grupo_id: Number(grupoId) }) });
+    } else {
+      await api(`/contactos/${id}/grupo`, { method: 'DELETE' });
+    }
+    await refrescar();
+  } catch (e) { avisar('aviso-grupo', e.message, true); await refrescar(); }
+}
+
+async function cambiarEstado(id, estado, select) {
+  const previo = select.dataset.previo || estado;
+  try {
+    await api(`/contactos/${id}`, { method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado }) });
+    await refrescar();
+  } catch (e) {
+    select.value = previo; // si falla, vuelve a mostrar el estado que tenía
+    avisar('aviso-grupo', e.message, true);
+  }
+}
+
+async function eliminarContacto(id) {
+  if (!confirm('¿Eliminar este contacto? Esta acción no se puede deshacer.')) return;
+  try {
+    await api(`/contactos/${id}`, { method: 'DELETE' });
+    await refrescar();
+  } catch (e) { avisar('aviso-grupo', e.message, true); }
+}
+
+function avisar(donde, texto, error) {
+  const a = $(donde);
+  a.textContent = texto;
+  a.className = 'aviso' + (error ? ' error' : '');
+  setTimeout(() => { a.textContent = ''; }, 4000);
+}
+
+function mostrar(vista) {
+  $('v-panel').classList.toggle('oculto', vista !== 'panel');
+  $('v-contactos').classList.toggle('oculto', vista !== 'contactos');
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activo', t.dataset.vista === vista));
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('[data-vista]').forEach(t => t.onclick = () => mostrar(t.dataset.vista));
+document.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => mostrar(b.dataset.ir));
+
+// --- Modal de alta / edición ---
+function abrirModal(contacto) {
+  EDITANDO = contacto ? contacto.id : null;
+  $('modal-titulo').textContent = contacto ? 'Editar contacto' : 'Nuevo contacto';
+  $('m-nombre').value = contacto?.nombre || '';
+  $('m-telefono').value = contacto?.telefono || '';
+  $('m-email').value = contacto?.email || '';
+  $('m-zona').value = contacto?.zona || '';
+  $('m-estado').value = contacto?.estado || 'pendiente';
+  $('m-origen').value = contacto?.origen || 'otro';
+  $('m-horario').value = contacto?.horario_preferido || 'sin_preferencia';
+  $('m-grupo').value = contacto?.grupo_id || '';
+  $('m-notas').value = contacto?.notas || '';
+  $('m-autoriza').checked = contacto?.autoriza_contacto || false;
+  $('modal-aviso').textContent = '';
+  $('modal-fondo').classList.remove('oculto');
+  $('m-nombre').focus();
+}
+function cerrarModal() { $('modal-fondo').classList.add('oculto'); }
+
+$('btn-nuevo').onclick = () => abrirModal(null);
+$('modal-cerrar').onclick = cerrarModal;
+$('modal-cancelar').onclick = cerrarModal;
+$('modal-fondo').onclick = e => { if (e.target.id === 'modal-fondo') cerrarModal(); };
+
+$('form-modal').onsubmit = async e => {
+  e.preventDefault();
+  const val = id => $(id).value.trim() || null;
+  const datos = {
+    nombre: val('m-nombre'), telefono: val('m-telefono'), email: val('m-email'), zona: val('m-zona'),
+    origen: $('m-origen').value, horario_preferido: $('m-horario').value,
+    notas: val('m-notas'), grupo_id: val('m-grupo') ? Number(val('m-grupo')) : null,
+    autoriza_contacto: $('m-autoriza').checked
+  };
+  try {
+    if (EDITANDO) {
+      await api(`/contactos/${EDITANDO}`, { method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...datos, estado: $('m-estado').value }) });
+    } else {
+      const creado = await api('/contactos', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+      if ($('m-estado').value !== 'pendiente') {
+        await api(`/contactos/${creado.id}`, { method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: $('m-estado').value }) });
+      }
+    }
+    cerrarModal();
+    await refrescar();
+  } catch (err) { avisar('modal-aviso', err.message, true); }
+};
+
+// --- Búsqueda y filtro ---
+let temporizadorBusqueda;
+$('buscar').oninput = () => {
+  clearTimeout(temporizadorBusqueda);
+  temporizadorBusqueda = setTimeout(refrescar, 350); // espera a que dejen de tipear
+};
+$('filtro-estado').onchange = refrescar;
+
+$('form-grupo').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    await api('/grupos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: $('g-nombre').value.trim(), dia_semana: $('g-dia').value.trim() || null,
+        horario: $('g-hora').value.trim() || null, cupo_maximo: Number($('g-cupo').value) }) });
+    e.target.reset();
+    $('g-cupo').value = 12;
+    await refrescar();
+    avisar('aviso-grupo', 'Grupo creado.');
+  } catch (err) { avisar('aviso-grupo', err.message, true); }
+};
+
+$('csv').onclick = () => window.location = '/api/contactos.csv';
+refrescar();
+</script>
+</body>
+</html>
