@@ -214,6 +214,20 @@ def listar_grupos(db: Session = Depends(get_db)):
     return db.scalars(select(models.Grupo).order_by(models.Grupo.nombre)).all()
 
 
+@app.patch("/api/grupos/{grupo_id}", response_model=schemas.GrupoLeer)
+def actualizar_grupo(
+    grupo_id: int, datos: schemas.GrupoActualizar, db: Session = Depends(get_db)
+):
+    grupo = db.get(models.Grupo, grupo_id)
+    if grupo is None:
+        raise HTTPException(404, "No existe ese grupo")
+    for campo, valor in datos.model_dump(exclude_unset=True).items():
+        setattr(grupo, campo, valor)
+    db.commit()
+    db.refresh(grupo)
+    return grupo
+
+
 # ---------------------------------------------------------------- métricas y export
 
 @app.get("/api/metricas", response_model=schemas.Metricas)

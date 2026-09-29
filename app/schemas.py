@@ -20,6 +20,18 @@ class GrupoCrear(BaseModel):
     activo: bool = True
 
 
+class GrupoActualizar(BaseModel):
+    """Todos los campos opcionales: sirve para PATCH parciales."""
+
+    nombre: str | None = Field(default=None, min_length=2, max_length=120)
+    zona: str | None = None
+    dia_semana: str | None = None
+    horario: str | None = None
+    anfitrion: str | None = None
+    cupo_maximo: int | None = Field(default=None, ge=1, le=100)
+    activo: bool | None = None
+
+
 class GrupoLeer(GrupoCrear):
     model_config = ConfigDict(from_attributes=True)
 
