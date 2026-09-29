@@ -244,7 +244,8 @@
           <div><label for="g-cupo">Cupo</label><input id="g-cupo" type="number" min="1" max="100" value="12"></div>
         </div>
         <div class="acciones">
-          <button type="submit" class="btn">Crear grupo</button>
+          <button type="submit" class="btn oscuro" id="btn-guardar-grupo">Crear grupo</button>
+          <button type="button" class="btn oculto" id="btn-cancelar-grupo">Cancelar edición</button>
           <button type="button" class="btn" id="csv">Exportar CSV</button>
           <span class="aviso" id="aviso-grupo"></span>
         </div>
@@ -378,7 +379,9 @@ async function refrescar() {
     ? grupos.map(g => `<div class="fila">
         <div class="quien"><b>${esc(g.nombre)}</b>
           <div>${esc(g.dia_semana || 'sin día')} ${esc(g.horario || '')} · ${g.cupo_disponible} de ${g.cupo_maximo} lugares libres</div>
-        </div></div>`).join('')
+        </div>
+        <button class="icono-btn" data-editar-grupo="${g.id}" aria-label="Editar grupo" title="Editar grupo">${ICONO.lapiz}</button>
+      </div>`).join('')
     : '<p class="vacio">Creá un grupo para poder asignarle contactos.</p>';
 
   $('m-grupo').innerHTML = '<option value="">Sin grupo</option>' +
@@ -394,6 +397,8 @@ async function refrescar() {
     b.onclick = () => abrirModal(contactos.find(c => c.id === Number(b.dataset.editar))));
   document.querySelectorAll('[data-eliminar]').forEach(b =>
     b.onclick = () => eliminarContacto(b.dataset.eliminar));
+  document.querySelectorAll('[data-editar-grupo]').forEach(b =>
+    b.onclick = () => editarGrupo(grupos.find(g => g.id === Number(b.dataset.editarGrupo))));
 }
 
 async function registrar(id, resultado) {
@@ -513,16 +518,45 @@ $('buscar').oninput = () => {
 };
 $('filtro-estado').onchange = refrescar;
 
+let EDITANDO_GRUPO = null; // null = alta nueva; si no, id del grupo que se está editando
+
+function editarGrupo(g) {
+  EDITANDO_GRUPO = g.id;
+  $('g-nombre').value = g.nombre;
+  $('g-dia').value = g.dia_semana || '';
+  $('g-hora').value = g.horario || '';
+  $('g-cupo').value = g.cupo_maximo;
+  $('btn-guardar-grupo').textContent = 'Guardar cambios';
+  $('btn-cancelar-grupo').classList.remove('oculto');
+  $('g-nombre').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $('g-nombre').focus();
+}
+
+function cancelarEdicionGrupo() {
+  EDITANDO_GRUPO = null;
+  $('form-grupo').reset();
+  $('g-cupo').value = 12;
+  $('btn-guardar-grupo').textContent = 'Crear grupo';
+  $('btn-cancelar-grupo').classList.add('oculto');
+}
+$('btn-cancelar-grupo').onclick = cancelarEdicionGrupo;
+
 $('form-grupo').onsubmit = async e => {
   e.preventDefault();
+  const datos = { nombre: $('g-nombre').value.trim(), dia_semana: $('g-dia').value.trim() || null,
+    horario: $('g-hora').value.trim() || null, cupo_maximo: Number($('g-cupo').value) };
   try {
-    await api('/grupos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre: $('g-nombre').value.trim(), dia_semana: $('g-dia').value.trim() || null,
-        horario: $('g-hora').value.trim() || null, cupo_maximo: Number($('g-cupo').value) }) });
-    e.target.reset();
-    $('g-cupo').value = 12;
+    if (EDITANDO_GRUPO) {
+      await api(`/grupos/${EDITANDO_GRUPO}`, { method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+      avisar('aviso-grupo', 'Grupo actualizado.');
+    } else {
+      await api('/grupos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos) });
+      avisar('aviso-grupo', 'Grupo creado.');
+    }
+    cancelarEdicionGrupo(); // limpia el formulario y vuelve a modo "Crear grupo"
     await refrescar();
-    avisar('aviso-grupo', 'Grupo creado.');
   } catch (err) { avisar('aviso-grupo', err.message, true); }
 };
 
